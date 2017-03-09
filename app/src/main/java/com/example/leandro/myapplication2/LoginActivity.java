@@ -32,6 +32,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import org.apache.http.params.HttpConnectionParams;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -50,6 +51,7 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -216,7 +218,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     private boolean isPasswordValid(String password) {
         //TODO: Replace this with your own logic
-        return password.length() > 4;
+        return password.length() > 2;
     }
 
     /**
@@ -328,15 +330,24 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // TODO: attempt authentication against a network service.
             // *******************************************************
 
-            //*
+
             Log.d("LOGIN ACTIVITY", "1");
 
-            JSONObject msg = null;  //passed in as a parameter to this method
+            // creamos Json {"email":VALUE,"password":VALUE}
+            JSONObject jsonObj = new JSONObject();
             try {
-                msg = new JSONObject("{}");
+                jsonObj.put("email", mEmail);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
+            try {
+                jsonObj.put("password", mPassword);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            Log.d("jsonObj", jsonObj.toString());
+
+
             Log.d("LOGIN ACTIVITY", "2");
             URL url = null;
             try {
@@ -387,7 +398,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             }
             Log.d("LOGIN ACTIVITY", "9");
             try {
-                osw.write(msg.toString());
+                // con write se envian los datos
+                osw.write(jsonObj.toString());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -405,34 +417,64 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             }
             Log.d("LOGIN ACTIVITY", "12");
             String sb = null;
+            // se recibe respuesta de la API
             BufferedReader br = null;
             try {
                 br = new BufferedReader(new InputStreamReader( httpCon.getInputStream(),"utf-8"));
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            String line = null;
+            String line;
             Log.d("LOGIN ACTIVITY", "13");
+            // leemos respuesta y la guardamos en string
             try {
                 while ((line = br.readLine()) != null) {
-                    sb += (line + "\n");
+                    sb += line;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            // se cierra conexion
             try {
                 br.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
+
+            // sacamos null que no sabemos porque esta al principio del string
+            sb = sb.replace("null", "");
             Log.d("LOGIN ACTIVITY F", sb);
 
-            //*/
+            // creamos e iniciamos jsonObject con la respuesta de la api
+            JSONObject resp = null;
+            try {
+                resp  = new JSONObject(sb);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            // parseamos la respuesta
+            String codeResp = new String();
+            try {
+                Log.d("tipo", (resp.getString("code")).getClass().getSimpleName());
+                codeResp = resp.getString("code");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            // verificamos si fue un usuario valido o no y retornamos
+            int code = Integer.parseInt(codeResp);
+            if(code == 200){
+                return true;
+            }else{
+                return false;
+            }
+
 
             // *******************************************************
 
-            try {
+            /*try {
                 // Simulate network access.
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
@@ -445,10 +487,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     // Account exists, return true if the password matches.
                     return pieces[1].equals(mPassword);
                 }
-            }
+            }*/
 
             // TODO: register the new account here.
-            return true;
+            //return true;
         }
 
         @Override
