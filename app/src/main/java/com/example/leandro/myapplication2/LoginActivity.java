@@ -330,25 +330,56 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // TODO: attempt authentication against a network service.
             // *******************************************************
 
-
             Log.d("LOGIN ACTIVITY", "1");
+            JSONObject jsonObj = createJsonObj(mEmail,mPassword);
+            return parsearRespuesta( sendRequest(jsonObj));
 
+            // *******************************************************
+
+            /*try {
+                // Simulate network access.
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                return false;
+            }
+
+            for (String credential : DUMMY_CREDENTIALS) {
+                String[] pieces = credential.split(":");
+                if (pieces[0].equals(mEmail)) {
+                    // Account exists, return true if the password matches.
+                    return pieces[1].equals(mPassword);
+                }
+            }*/
+
+            // TODO: register the new account here.
+            //return true;
+        }
+
+        // En este metodo creamos el objeto Json con el email y password para luego pegarle a la api
+        protected JSONObject createJsonObj(String email, String password){
+            Log.d("LOGIN ACTIVITY createJsonObj", "1");
             // creamos Json {"email":VALUE,"password":VALUE}
             JSONObject jsonObj = new JSONObject();
             try {
-                jsonObj.put("email", mEmail);
+                jsonObj.put("email", email); // el email entra por parametro
             } catch (JSONException e) {
                 e.printStackTrace();
             }
             try {
-                jsonObj.put("password", mPassword);
+                jsonObj.put("password", password); // la contraseña entra por parametro
             } catch (JSONException e) {
                 e.printStackTrace();
             }
             Log.d("jsonObj", jsonObj.toString());
+            return jsonObj;
 
+        }
 
-            Log.d("LOGIN ACTIVITY", "2");
+        // Le pegamos a la api enviandole el jsonObj que entra como parametro
+        // Recibimos la respuesta de la api
+        // Decodificamos la respuesta (sacamos el null) y la retornamos
+        protected String sendRequest(JSONObject jsonObj){
+            Log.d("LOGIN ACTIVITY senRequest", "1");
             URL url = null;
             try {
                 url = new URL("http://leafi.com.ar/1.php?key=zyzz948&funcion=validarusuario");
@@ -415,9 +446,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            Log.d("LOGIN ACTIVITY", "12");
-            String sb = null;
+
             // se recibe respuesta de la API
+
+            String sb = null;
             BufferedReader br = null;
             try {
                 br = new BufferedReader(new InputStreamReader( httpCon.getInputStream(),"utf-8"));
@@ -441,11 +473,15 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 e.printStackTrace();
             }
 
-
             // sacamos null que no sabemos porque esta al principio del string
             sb = sb.replace("null", "");
             Log.d("LOGIN ACTIVITY F", sb);
 
+            return sb;
+        }
+
+        // Parseamos respuesta y respondemos true or false
+        protected boolean parsearRespuesta(String sb) {
             // creamos e iniciamos jsonObject con la respuesta de la api
             JSONObject resp = null;
             try {
@@ -471,26 +507,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 return false;
             }
 
-
-            // *******************************************************
-
-            /*try {
-                // Simulate network access.
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                return false;
-            }
-
-            for (String credential : DUMMY_CREDENTIALS) {
-                String[] pieces = credential.split(":");
-                if (pieces[0].equals(mEmail)) {
-                    // Account exists, return true if the password matches.
-                    return pieces[1].equals(mPassword);
-                }
-            }*/
-
-            // TODO: register the new account here.
-            //return true;
         }
 
         @Override
